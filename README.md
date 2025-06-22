@@ -29,10 +29,16 @@ This Python script captures real-time GPS data from a USB-connected receiver, fo
 pip install pyserial pynmea2
 ```
 
-### Installation:
+### 1. Installation:
 ```
 git clone https://github.com/myTeckNet/usbGPStoCoT.git ./usbGPStoCot && cd usbGPStoCot
 ```
+
+### 2. Register the CLI command (Optional)
+```bash
+pip install .
+```
+
 ---
 
 ## 🚀 Usage
@@ -40,6 +46,11 @@ git clone https://github.com/myTeckNet/usbGPStoCoT.git ./usbGPStoCot && cd usbGP
 python3 usbGPStoCoT.py
 ```
 The script reads from the GPS, builds a CoT XML message, frames it, and sends it over TLS every 20 seconds.
+
+### CLI Command (Requires `pip install .` to be run)
+```bash
+usbGPStoCOT
+```
 
 ---
 
@@ -115,3 +126,4 @@ usbGPStoCot/
 ├── ca.pem
 └── uusbgpstocot.service
 ```
+
