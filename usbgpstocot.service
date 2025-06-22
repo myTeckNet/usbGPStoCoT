@@ -1,0 +1,16 @@
+[Unit]
+Description=USB GPS CoT Transmitter
+After=network.target
+
+[Service]
+Type=simple
+ExecStart=/usr/bin/python3 /path/to/script/usbGPStoCoT.py
+WorkingDirectory=/path/to/script
+Restart=on-failure
+RestartSec=5
+Environment=PYTHONUNBUFFERED=1
+StandardOutput=journal
+StandardError=journal
+
+[Install]
+WantedBy=multi-user.target
