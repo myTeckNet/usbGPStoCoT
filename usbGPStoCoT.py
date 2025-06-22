@@ -23,7 +23,7 @@ VERIFY_SERVER_CERT = True   # Still verifies the cert chain
 SKIP_HOSTNAME_VERIFY = True # Set this to True to ignore CN/SAN mismatch
 
 # === Logging Setup ===
-log_dir = "/tmp/gps_logs" # Change this to your desired log directory
+log_dir = "/tmp/gps_logs"
 os.makedirs(log_dir, exist_ok=True)
 log_file = os.path.join(log_dir, "usb_gps.log")
 handler = RotatingFileHandler(log_file, maxBytes=1024*1024, backupCount=5)
@@ -68,7 +68,23 @@ def get_gps_data(serial_port=SERIAL_PORT, baudrate=BAUDRATE):
         logger.error(f"Serial connection error: {e}")
     return None, None, None
 
-# === TLS Setup ===
+# === Transport Senders ===
+def send_udp(data, ip, port):
+    try:
+        with socket.socket(socket.AF_INET, socket.SOCK_DGRAM) as s:
+            framed = b'\xbf\x00\xbf' + data.encode("utf-8")
+            s.sendto(framed, (ip, port))
+    except Exception as e:
+        logger.error(f"UDP send error: {e}")
+
+def send_tcp(data, ip, port):
+    try:
+        with socket.create_connection((ip, port), timeout=5) as s:
+            framed = b'\xbf\x00\xbf' + data.encode("utf-8")
+            s.sendall(framed)
+    except Exception as e:
+        logger.error(f"TCP send error: {e}")
+
 def open_tls_connection(ip, port):
     context = ssl.create_default_context(ssl.Purpose.SERVER_AUTH)
     if not VERIFY_SERVER_CERT:
@@ -85,25 +101,40 @@ def open_tls_connection(ip, port):
     tls_sock = context.wrap_socket(sock, server_hostname=ip)
     return tls_sock
 
-# === Loop ===
+# === Main Loop ===
 def main():
     uid = str(uuid.uuid4())
-    try:
-        tls_sock = open_tls_connection(DEST_IP, DEST_PORT)
+    tls_sock = None
 
-        while True:
-            lat, lon, hae = get_gps_data()
-            if None not in (lat, lon, hae):
-                cot_xml = create_cot_xml(uid, lat, lon, hae)
-                print(cot_xml)
+    if PROTOCOL.upper() == "TLS":
+        try:
+            tls_sock = open_tls_connection(DEST_IP, DEST_PORT)
+        except Exception as e:
+            logger.error(f"TLS connection failed: {e}")
+            return
 
-                framed = b'\xbf\x00\xbf' + cot_xml.encode("utf-8")
-                tls_sock.sendall(framed)
+    while True:
+        lat, lon, hae = get_gps_data()
+        if None not in (lat, lon, hae):
+            cot_xml = create_cot_xml(uid, lat, lon, hae)
+            print(cot_xml)
+
+            if PROTOCOL.upper() == "TLS":
+                try:
+                    framed = b'\xbf\x00\xbf' + cot_xml.encode("utf-8")
+                    tls_sock.sendall(framed)
+                except Exception as e:
+                    logger.error(f"TLS send error: {e}")
+                    break  # Optionally reconnect here
+            elif PROTOCOL.upper() == "UDP":
+                send_udp(cot_xml, DEST_IP, DEST_PORT)
+            elif PROTOCOL.upper() == "TCP":
+                send_tcp(cot_xml, DEST_IP, DEST_PORT)
             else:
-                logger.error("Invalid GPS fix.")
-            time.sleep(20)
-    except Exception as e:
-        logger.error(f"Persistent TLS connection failed: {e}")
-        
+                logger.error(f"Unsupported protocol: {PROTOCOL}")
+        else:
+            logger.error("Invalid GPS fix.")
+        time.sleep(20)
+
 if __name__ == "__main__":
     main()
