@@ -31,7 +31,7 @@ pip install pyserial pynmea2
 
 ### 1. Installation:
 ```
-git clone https://github.com/myTeckNet/usbGPStoCoT.git ./usbGPStoCot && cd usbGPStoCot
+git clone https://github.com/myTeckNet/usbGPStoCoT.git ./usbGPStoCoT && cd usbGPStoCoT
 ```
 
 ### 2. Register the CLI command (Optional)
