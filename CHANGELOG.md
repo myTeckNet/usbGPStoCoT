@@ -22,3 +22,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ### Added
 - First stable release of USB GPS CoT Transmitter
+
+---
+
+## [1.0.1] - 2024-06-23
+
+### Updated
+- Updated the uid to maintain persistence at script or systemd restarts

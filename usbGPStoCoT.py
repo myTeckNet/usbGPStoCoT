@@ -103,7 +103,7 @@ def open_tls_connection(ip, port):
 
 # === Main Loop ===
 def main():
-    uid = str(uuid.uuid4())
+    uid = str(uuid.uuid3(uuid.NAMESPACE_DNS, CALLSIGN))
     tls_sock = None
 
     if PROTOCOL.upper() == "TLS":
